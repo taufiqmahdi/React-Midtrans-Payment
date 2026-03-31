@@ -1,73 +1,55 @@
-# React + TypeScript + Vite
+# Midtrans Payment Gateway — React Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + TypeScript checkout UI handling the full Midtrans Snap payment lifecycle.
 
-Currently, two official plugins are available:
+## Features
+- Opens Midtrans Snap popup via a short-lived token fetched from the backend
+- Custom `useMidtrans` hook encapsulating success, pending, error, and close states
+- Fully typed with TypeScript — includes global `window.snap` type declarations
+- Environment-based config for Client Key and Snap script URL
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Tech Stack
+React · TypeScript · Vite · Axios · Midtrans Snap.js
 
-## React Compiler
+## Getting Started
+```bash
+cp .env.example .env
+# Fill in your Midtrans sandbox Client Key and API base URL
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Environment Variables
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+| Variable | Description |
+|---|---|
+| `VITE_MIDTRANS_CLIENT_KEY` | Your Midtrans Client Key (sandbox or production) |
+| `VITE_SNAP_URL` | Snap.js script URL — use sandbox URL for testing |
+| `VITE_API_BASE_URL` | Base URL of the Go backend |
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## How It Works
+
+1. User clicks Pay — the `useMidtrans` hook calls the backend `POST /api/transaction`
+2. Backend returns a short-lived `snap_token`
+3. Frontend calls `window.snap.pay(snap_token, callbacks)` to open the Midtrans popup
+4. Callbacks handle success, pending, and error states in the UI
+5. Final payment confirmation happens server-side via signed Midtrans webhooks — not from these frontend callbacks
+
+> The Client Key is safe to expose in the frontend. The Server Key never leaves the backend.
+
+## Project Structure
 ```
+src/
+├── api/
+│   └── payment.ts         # Axios API client
+├── components/
+│   └── CheckoutButton.tsx # Pay button with status UI
+├── hooks/
+│   └── useMidtrans.ts     # Custom hook for payment lifecycle
+└── types/
+    └── midtrans.d.ts      # Global window.snap type declarations
+```
+
+## Related
+- [Backend — Go + Gin](https://github.com/taufiqmahdi/Go-Midtrans-Payment)
